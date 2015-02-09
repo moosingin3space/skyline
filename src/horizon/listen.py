@@ -4,6 +4,7 @@ from Queue import Full
 from multiprocessing import Process
 from struct import Struct, unpack
 from msgpack import unpackb
+import json
 
 import logging
 import settings
@@ -208,9 +209,9 @@ class Listen(Process):
                 logger.info('can\'t connect to socket: ' + str(e))
                 break
 
-    def listen_tcp_msgpack(self):
+    def listen_tcp_json(self):
         """
-        Listen over TCP for MessagePack strings
+        Listen over TCP for JSON strings
         """
         while 1:
             try:
@@ -223,7 +224,7 @@ class Listen(Process):
                     self.check_if_parent_is_alive()
                     try:
                         data = conn.recv(1024)
-                        metric = unpackb(data)
+                        metric = json.loads(data)
                         chunk.append(metric)
                     except Exception as e:
                         logger.info('[tcp]: failed to unpack: %s' % repr(e))
@@ -250,6 +251,6 @@ class Listen(Process):
         elif self.type == 'udp':
             self.listen_udp()
         elif self.type == 'tcp':
-            self.listen_tcp()
+            self.listen_tcp_json()
         else:
             logging.error('unknown listener format')
