@@ -217,13 +217,14 @@ class Listen(Process):
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.bind((self.ip, self.port))
+                infile = s.makefile()
                 logger.info('listening over TCP for messagepack on %s' % self.port)
 
                 chunk = []
                 while 1:
                     self.check_if_parent_is_alive()
                     try:
-                        data = conn.recv(1024)
+                        data = infile.readline()
                         metricObject = json.loads(data)
                         metric = [metricObject['name'], [metricObject['timestamp'], metricObject['value']]]
                         chunk.append(metric)
