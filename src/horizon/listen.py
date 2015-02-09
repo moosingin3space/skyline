@@ -217,17 +217,20 @@ class Listen(Process):
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.bind((self.ip, self.port))
-                infile = s.makefile()
+                s.listen(1)
                 logger.info('listening over TCP for messagepack on %s' % self.port)
 
                 chunk = []
                 while 1:
+                    conn, addr = s.accept()
                     self.check_if_parent_is_alive()
                     try:
-                        data = infile.readline()
-                        metricObject = json.loads(data)
-                        metric = [metricObject['name'], [metricObject['timestamp'], metricObject['value']]]
-                        chunk.append(metric)
+                        sfile = s.makefile()
+                        for data in sfile.readlines():
+                            metricObject = json.loads(data)
+                            metric = [metricObject['name'], [metricObject['timestamp'], metricObject['value']]]
+                            chunk.append(metric)
+                            logger.info('[tcp]: new metric %s' % str(metricObject))
                     except Exception as e:
                         logger.info('[tcp]: failed to unpack: %s' % repr(e))
 

@@ -167,7 +167,7 @@ Horizon settings
 WORKER_PROCESSES = 2
 
 # The IP address for Horizon to listen on.  Defaults to gethostname()
-# HORIZON_IP = '0.0.0.0'
+HORIZON_IP = '0.0.0.0'
 
 # This is the port that listens for Graphite pickles over TCP, sent by Graphite's
 # carbon-relay agent.
@@ -231,7 +231,7 @@ Webapp settings
 """
 
 # The IP address for the webapp
-WEBAPP_IP = '127.0.0.1'
+WEBAPP_IP = '0.0.0.0'
 
 # The port for the webapp
 WEBAPP_PORT = 1500
