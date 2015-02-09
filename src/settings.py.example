@@ -176,6 +176,9 @@ PICKLE_PORT = 2024
 # This is the port that listens for Messagepack-encoded UDP packets.
 UDP_PORT = 2025
 
+# This is the port that listens for JSON-encoded TCP packets
+TCP_PORT = 2026
+
 # This is how big a 'chunk' of metrics will be before they are added onto
 # the shared queue for processing into Redis. If you are noticing that Horizon
 # is having trouble consuming metrics, try setting this value a higher.

@@ -16,6 +16,9 @@ RUN pip install -r /app/requirements.txt
 # Make directories
 RUN (mkdir /var/log/skyline && mkdir /var/run/skyline && mkdir /var/dump)
 
+# Copy settings
+RUN cp /app/src/settings.py.example /app/src/settings.py
+
 # Finally, run the system
 WORKDIR /app/bin
 CMD sh ../skyline-start.sh
