@@ -186,9 +186,12 @@ class Listen(Process):
                 chunk = []
                 while 1:
                     self.check_if_parent_is_alive()
-                    data, addr = s.recvfrom(1024)
-                    metric = unpackb(data)
-                    chunk.append(metric)
+                    try:
+                        data, addr = s.recvfrom(1024)
+                        metric = unpackb(data)
+                        chunk.append(metric)
+                    except Exception as e:
+                        logger.info('[udp]: failed to unpack: %s' % repr(e))
 
                     # Queue the chunk and empty the variable
                     if len(chunk) > settings.CHUNK_SIZE:
@@ -205,6 +208,37 @@ class Listen(Process):
                 logger.info('can\'t connect to socket: ' + str(e))
                 break
 
+    def listen_tcp_msgpack(self):
+        """
+        Listen over TCP for MessagePack strings
+        """
+        while 1:
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.bind((self.ip, self.port))
+                logger.info('listening over TCP for messagepack on %s' % self.port)
+
+                chunk = []
+                while 1:
+                    self.check_if_parent_is_alive()
+                    try:
+                        data = conn.recv(1024)
+                        metric = unpackb(data)
+                        chunk.append(metric)
+                    except Exception as e:
+                        logger.info('[tcp]: failed to unpack: %s' % repr(e))
+
+                    if len(chunk) > settings.CHUNK_SIZE:
+                        try:
+                            self.q.put(list(chunk), block=False)
+                            chunk[:] = []
+                        except Full:
+                            logger.info('queue is full, dropping datapoints')
+                            chunk[:] = []
+            except Exception as e:
+                logger.info('can\'t connect to socket: ' + str(e))
+                break
+
     def run(self):
         """
         Called when process intializes.
@@ -215,5 +249,7 @@ class Listen(Process):
             self.listen_pickle()
         elif self.type == 'udp':
             self.listen_udp()
+        elif self.type == 'tcp':
+            self.listen_tcp()
         else:
             logging.error('unknown listener format')
