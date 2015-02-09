@@ -224,7 +224,8 @@ class Listen(Process):
                     self.check_if_parent_is_alive()
                     try:
                         data = conn.recv(1024)
-                        metric = json.loads(data)
+                        metricObject = json.loads(data)
+                        metric = [metricObject['name'], [metricObject['timestamp'], metricObject['value']]]
                         chunk.append(metric)
                     except Exception as e:
                         logger.info('[tcp]: failed to unpack: %s' % repr(e))
