@@ -213,34 +213,41 @@ class Listen(Process):
         """
         Listen over TCP for JSON strings
         """
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.bind((self.ip, self.port))
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.setblocking(1)
+            s.listen(5)
+        except Exception as e:
+            logger.info('can\'t listen on socket: ' + repr(e))
+            return
         while 1:
             try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.bind((self.ip, self.port))
-                s.listen(1)
-                logger.info('listening over TCP for messagepack on %s' % self.port)
+                logger.info('listening over TCP for json on %s' % self.port)
+
+                conn, addr = s.accept()
+                logger.info('connection from %s:%s' % (addr[0], self.port))
 
                 chunk = []
-                while 1:
-                    conn, addr = s.accept()
-                    self.check_if_parent_is_alive()
-                    try:
-                        sfile = s.makefile()
-                        for data in sfile.readlines():
-                            metricObject = json.loads(data)
-                            metric = [metricObject['name'], [metricObject['timestamp'], metricObject['value']]]
-                            chunk.append(metric)
-                            logger.info('[tcp]: new metric %s' % str(metricObject))
-                    except Exception as e:
-                        logger.info('[tcp]: failed to unpack: %s' % repr(e))
+                self.check_if_parent_is_alive()
+                try:
+                    sfile = conn.makefile()
+                    for data in sfile.readlines():
+                        metricObject = json.loads(data)
+                        metric = [metricObject['name'], [metricObject['timestamp'], metricObject['value']]]
+                        chunk.append(metric)
+                        logger.info('[tcp]: new metric %s' % str(metricObject))
+                except Exception as e:
+                    logger.info('[tcp]: failed to unpack: %s' % repr(e))
 
-                    if len(chunk) > settings.CHUNK_SIZE:
-                        try:
-                            self.q.put(list(chunk), block=False)
-                            chunk[:] = []
-                        except Full:
-                            logger.info('queue is full, dropping datapoints')
-                            chunk[:] = []
+                if len(chunk) > settings.CHUNK_SIZE:
+                    try:
+                        self.q.put(list(chunk), block=False)
+                        chunk[:] = []
+                    except Full:
+                        logger.info('queue is full, dropping datapoints')
+                        chunk[:] = []
             except Exception as e:
                 logger.info('can\'t connect to socket: ' + str(e))
                 break
