@@ -87,6 +87,8 @@ class Worker(Process):
 
                 for metric in chunk:
 
+                    logger.info('new metric: %s' % repr(metric))
+
                     # Check if we should skip it
                     if self.in_skip_list(metric[0]):
                         continue
@@ -99,6 +101,8 @@ class Worker(Process):
                     key = ''.join((FULL_NAMESPACE, metric[0]))
                     pipe.append(key, packb(metric[1]))
                     pipe.sadd(full_uniques, key)
+
+                    logger.info('Appending to redis key %s', key)
 
                     if not self.skip_mini:
                         # Append to mini namespace

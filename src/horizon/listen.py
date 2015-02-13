@@ -237,7 +237,6 @@ class Listen(Process):
                         metricObject = json.loads(data)
                         metric = [metricObject['name'], [metricObject['timestamp'], metricObject['value']]]
                         chunk.append(metric)
-                        logger.info('[tcp]: new metric %s' % str(metricObject))
                 except Exception as e:
                     logger.info('[tcp]: failed to unpack: %s' % repr(e))
 
